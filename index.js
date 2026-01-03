@@ -18,11 +18,14 @@ app.get("/", (req, res) => {
   res.json({ message: "Backend working 🚀" });
 });
 
-app.get("/tours", (req, res) => {
-  connection.query("SELECT * FROM tours", (err, result) => {
-    if (err) return res.status(500).json(err);
-    res.json(result);
-  });
+app.get("/tours", async (req, res) => {
+  try {
+    const [rows] = await connection.query("SELECT * FROM tours");
+    res.json(rows);
+  } catch (error) {
+    console.error("❌ Tours route error:", error);
+    res.status(500).json({ message: "Failed to fetch tours" });
+  }
 });
 
 app.get("/tours/:id", (req, res) => {
