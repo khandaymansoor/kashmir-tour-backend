@@ -1,57 +1,49 @@
-import dotenv from "dotenv";
-dotenv.config();
-
-console.log("DB_USER:", process.env.DB_USER);
-console.log("DB_PASSWORD:", process.env.DB_PASSWORD ? "LOADED" : "NOT LOADED");
-
 import express from "express";
 import cors from "cors";
-import connection from "./db/connection.js"; // ✅ ONLY ONCE
+import connection from "./db/connection.js";
 
 const app = express();
-const PORT = 3001;
 
-app.use(cors());
+// ✅ CORS FIX
+app.use(cors({
+  origin: [
+    "http://localhost:3000",
+    "https://kashmir-tour-frontend-git-main-mansoor-ahmad-khanday-s-projects.vercel.app"
+  ],
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
+}));
+
 app.use(express.json());
 
+// TEST ROUTE
 app.get("/", (req, res) => {
-  res.json({ message: "Backend working 🚀" });
+  res.send("Backend is running");
 });
 
-app.get("/tours", async (req, res) => {
-  try {
-    const [rows] = await connection.query("SELECT * FROM tours");
-    res.json(rows);
-  } catch (error) {
-    console.error("❌ Tours route error:", error);
-    res.status(500).json({ message: "Failed to fetch tours" });
-  }
-});
-
-app.get("/tours/:id", (req, res) => {
-  connection.query(
-    "SELECT * FROM tours WHERE id = ?",
-    [req.params.id],
-    (err, result) => {
-      if (err) return res.status(500).json(err);
-      res.json(result[0]);
-    }
-  );
-});
-
+// BOOKINGS ROUTE
 app.post("/bookings", (req, res) => {
-  const { tourId, name, phone, travelDate } = req.body;
+  const { name, phone, email, tour_name, persons, message } = req.body;
+
+  const sql = `
+    INSERT INTO bookings (name, phone, email, tour_name, persons, message)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `;
 
   connection.query(
-    "INSERT INTO bookings (tour_id, name, phone, travel_date) VALUES (?, ?, ?, ?)",
-    [tourId, name, phone, travelDate],
-    (err) => {
-      if (err) return res.status(500).json(err);
-      res.json({ message: "Booking saved ✅" });
+    sql,
+    [name, phone, email, tour_name, persons, message],
+    (err, result) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ success: false });
+      }
+      res.json({ success: true });
     }
   );
 });
 
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`✅ Backend running on http://localhost:${PORT}`);
+  console.log("Backend running on port", PORT);
 });
