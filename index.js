@@ -2,20 +2,16 @@ import express from "express";
 import cors from "cors";
 import connection from "./db/connection.js";
 
-const app = express;
+const app = express();
 
-/* =========================
-   ✅ CORS — FINAL FIX
-========================= */
+/* ✅ CORS – FINAL */
 app.use(cors({
-  origin: "*",               // allow all origins (safe for now)
+  origin: "*",
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type"]
 }));
 
-// IMPORTANT: handle preflight
 app.options("*", cors());
-
 app.use(express.json());
 
 /* =========================
