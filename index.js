@@ -54,6 +54,15 @@ app.post("/bookings", (req, res) => {
    START SERVER
 ========================= */
 const PORT = process.env.PORT || 3001;
+app.get("/tours", (req, res) => {
+  connection.query("SELECT * FROM tours", (err, results) => {
+    if (err) {
+      console.error("Tours error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+    res.json(results);
+  });
+});
 app.listen(PORT, () => {
   console.log("Backend running on port", PORT);
 });
