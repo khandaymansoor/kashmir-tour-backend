@@ -27,15 +27,21 @@ app.get("/", (req, res) => {
 // TOURS ROUTE
 // ===============================
 app.get("/tours", (req, res) => {
-  console.log("👉 /tours hit");
+  console.log("👉 /tours API hit");
 
-  connection.query("SELECT * FROM tours", (err, results) => {
+  const sql = "SELECT * FROM tours";
+
+  connection.query(sql, (err, rows) => {
     if (err) {
-      console.error("❌ Tours error:", err);
-      return res.status(500).json({ error: err.message });
+      console.error("❌ Tours SQL Error:", err);
+      return res.status(500).json({
+        error: "Database error",
+        details: err.message,
+      });
     }
 
-    res.json(results);
+    console.log("✅ Tours fetched:", rows.length);
+    res.json(rows);
   });
 });
 

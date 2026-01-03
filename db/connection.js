@@ -1,13 +1,19 @@
-import mysql from "mysql2/promise";
+import mysql from "mysql2";
 
-const connection = await mysql.createConnection({
+const connection = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  port: Number(process.env.DB_PORT),
+  port: process.env.DB_PORT,
 });
 
-console.log("✅ MySQL connected successfully");
+connection.connect((err) => {
+  if (err) {
+    console.error("❌ MySQL error:", err);
+  } else {
+    console.log("✅ MySQL connected successfully");
+  }
+});
 
 export default connection;
