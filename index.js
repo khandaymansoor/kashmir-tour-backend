@@ -69,6 +69,21 @@ app.post("/bookings", (req, res) => {
     }
   );
 });
+// ===============================
+// ADMIN: GET ALL BOOKINGS
+// ===============================
+app.get("/admin/bookings", (req, res) => {
+  const sql = "SELECT * FROM bookings ORDER BY created_at DESC";
+
+  connection.query(sql, (err, results) => {
+    if (err) {
+      console.error("Admin bookings error:", err);
+      return res.status(500).json({ error: "Failed to fetch bookings" });
+    }
+
+    res.json(results);
+  });
+});
 
 // ===============================
 // START SERVER
