@@ -2,16 +2,18 @@ import express from "express";
 import cors from "cors";
 import connection from "./db/connection.js";
 
-const app = express(); // ✅ FIXED HERE
+const app = express();
 
 // ===============================
-// CORS
+// CORS SETUP
 // ===============================
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type"]
-}));
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
 
 app.options("*", cors());
 app.use(express.json());
@@ -20,11 +22,11 @@ app.use(express.json());
 // TEST ROUTE
 // ===============================
 app.get("/", (req, res) => {
-  res.send("Backend is running");
+  res.send("✅ Backend is running");
 });
 
 // ===============================
-// TOURS ROUTE
+// TOURS ROUTE (GET)
 // ===============================
 app.get("/tours", (req, res) => {
   console.log("👉 /tours API hit");
@@ -35,20 +37,19 @@ app.get("/tours", (req, res) => {
     if (err) {
       console.error("❌ Tours SQL Error:", err);
       return res.status(500).json({
-        error: "Database error",
-        details: err.message,
+        success: false,
+        error: err.message,
       });
     }
 
-    console.log("✅ Tours fetched:", rows.length);
     res.json(rows);
   });
 });
 
 // ===============================
-// BOOKINGS ROUTE
+// BOOKINGS ROUTE (POST)
 // ===============================
-app.post("/bookings", async (req, res) => {
+app.post("/bookings", (req, res) => {
   console.log("📥 Incoming booking:", req.body);
 
   const { name, phone, email, tour_name, persons, message } = req.body;
@@ -66,76 +67,52 @@ app.post("/bookings", async (req, res) => {
     VALUES (?, ?, ?, ?, ?, ?)
   `;
 
-  try {
-    connection.query(
-      sql,
-      [name, phone, email, tour_name, persons, message],
-      (err, result) => {
-        if (err) {
-          console.error("❌ MYSQL ERROR:", err);
-          return res.status(500).json({
-            success: false,
-            mysqlError: err.message,
-          });
-        }
-
-        console.log("✅ Booking inserted:", result.insertId);
-        res.json({ success: true });
+  connection.query(
+    sql,
+    [name, phone, email || null, tour_name, persons || 1, message || null],
+    (err, result) => {
+      if (err) {
+        console.error("❌ Booking SQL Error:", err);
+        return res.status(500).json({
+          success: false,
+          mysqlError: err.message,
+        });
       }
-    );
-  } catch (e) {
-    console.error("❌ SERVER ERROR:", e);
-    res.status(500).json({ success: false, error: e.message });
-  }
+
+      res.json({
+        success: true,
+        bookingId: result.insertId,
+      });
+    }
+  );
 });
+
 // ===============================
-// ADMIN: GET ALL BOOKINGS
+// ADMIN: GET ALL BOOKINGS (FIXED)
 // ===============================
-app.post("/admin/bookings", async (req, res) => {
-  console.log("📥 Incoming booking:", req.body);
+app.get("/admin/bookings", (req, res) => {
+  console.log("📋 Admin bookings requested");
 
-  const { name, phone, email, tour_name, persons, message } = req.body;
+  const sql = "SELECT * FROM bookings ORDER BY id DESC";
 
-  if (!name || !phone || !tour_name) {
-    return res.status(400).json({
-      success: false,
-      error: "Missing required fields",
-    });
-  }
+  connection.query(sql, (err, rows) => {
+    if (err) {
+      console.error("❌ Admin bookings SQL Error:", err);
+      return res.status(500).json({
+        success: false,
+        mysqlError: err.message,
+      });
+    }
 
-  const sql = `
-    INSERT INTO bookings 
-    (name, phone, email, tour_name, persons, message)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `;
-
-  try {
-    connection.query(
-      sql,
-      [name, phone, email, tour_name, persons, message],
-      (err, result) => {
-        if (err) {
-          console.error("❌ MYSQL ERROR:", err);
-          return res.status(500).json({
-            success: false,
-            mysqlError: err.message,
-          });
-        }
-
-        console.log("✅ Booking inserted:", result.insertId);
-        res.json({ success: true });
-      }
-    );
-  } catch (e) {
-    console.error("❌ SERVER ERROR:", e);
-    res.status(500).json({ success: false, error: e.message });
-  }
+    res.json(rows);
+  });
 });
 
 // ===============================
 // START SERVER
 // ===============================
 const PORT = process.env.PORT || 3001;
+
 app.listen(PORT, () => {
   console.log(`✅ Backend running on port ${PORT}`);
 });
