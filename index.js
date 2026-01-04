@@ -52,16 +52,17 @@ app.post("/bookings", (req, res) => {
   const { name, phone, email, tour_name, persons, message } = req.body;
 
   const sql = `
-    INSERT INTO bookings (name, phone, email, tour_name, persons, message)
+    INSERT INTO bookings 
+    (name, phone, email, tour_name, persons, message)
     VALUES (?, ?, ?, ?, ?, ?)
   `;
 
   connection.query(
     sql,
     [name, phone, email, tour_name, persons, message],
-    (err) => {
+    (err, result) => {
       if (err) {
-        console.error("❌ Booking error:", err);
+        console.error("BOOKING ERROR:", err);
         return res.status(500).json({ success: false });
       }
 
