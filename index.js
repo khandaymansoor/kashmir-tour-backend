@@ -48,8 +48,17 @@ app.get("/tours", (req, res) => {
 // ===============================
 // BOOKINGS ROUTE
 // ===============================
-app.post("/bookings", (req, res) => {
+app.post("/bookings", async (req, res) => {
+  console.log("📥 Incoming booking:", req.body);
+
   const { name, phone, email, tour_name, persons, message } = req.body;
+
+  if (!name || !phone || !tour_name) {
+    return res.status(400).json({
+      success: false,
+      error: "Missing required fields",
+    });
+  }
 
   const sql = `
     INSERT INTO bookings 
@@ -57,33 +66,70 @@ app.post("/bookings", (req, res) => {
     VALUES (?, ?, ?, ?, ?, ?)
   `;
 
-  connection.query(
-    sql,
-    [name, phone, email, tour_name, persons, message],
-    (err, result) => {
-      if (err) {
-        console.error("BOOKING ERROR:", err);
-        return res.status(500).json({ success: false });
-      }
+  try {
+    connection.query(
+      sql,
+      [name, phone, email, tour_name, persons, message],
+      (err, result) => {
+        if (err) {
+          console.error("❌ MYSQL ERROR:", err);
+          return res.status(500).json({
+            success: false,
+            mysqlError: err.message,
+          });
+        }
 
-      res.json({ success: true });
-    }
-  );
+        console.log("✅ Booking inserted:", result.insertId);
+        res.json({ success: true });
+      }
+    );
+  } catch (e) {
+    console.error("❌ SERVER ERROR:", e);
+    res.status(500).json({ success: false, error: e.message });
+  }
 });
 // ===============================
 // ADMIN: GET ALL BOOKINGS
 // ===============================
-app.get("/admin/bookings", (req, res) => {
-  const sql = "SELECT * FROM bookings ORDER BY created_at DESC";
+app.post("/admin/bookings", async (req, res) => {
+  console.log("📥 Incoming booking:", req.body);
 
-  connection.query(sql, (err, results) => {
-    if (err) {
-      console.error("Admin bookings error:", err);
-      return res.status(500).json({ error: "Failed to fetch bookings" });
-    }
+  const { name, phone, email, tour_name, persons, message } = req.body;
 
-    res.json(results);
-  });
+  if (!name || !phone || !tour_name) {
+    return res.status(400).json({
+      success: false,
+      error: "Missing required fields",
+    });
+  }
+
+  const sql = `
+    INSERT INTO bookings 
+    (name, phone, email, tour_name, persons, message)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `;
+
+  try {
+    connection.query(
+      sql,
+      [name, phone, email, tour_name, persons, message],
+      (err, result) => {
+        if (err) {
+          console.error("❌ MYSQL ERROR:", err);
+          return res.status(500).json({
+            success: false,
+            mysqlError: err.message,
+          });
+        }
+
+        console.log("✅ Booking inserted:", result.insertId);
+        res.json({ success: true });
+      }
+    );
+  } catch (e) {
+    console.error("❌ SERVER ERROR:", e);
+    res.status(500).json({ success: false, error: e.message });
+  }
 });
 
 // ===============================
