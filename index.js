@@ -91,19 +91,8 @@ app.post("/bookings", (req, res) => {
 // ADMIN: GET ALL BOOKINGS (FIXED)
 // ===============================
 app.get("/admin/bookings", (req, res) => {
-  console.log("📋 Admin bookings requested");
-
-  const sql = "SELECT * FROM bookings ORDER BY id DESC";
-
-  connection.query(sql, (err, rows) => {
-    if (err) {
-      console.error("❌ Admin bookings SQL Error:", err);
-      return res.status(500).json({
-        success: false,
-        mysqlError: err.message,
-      });
-    }
-
+  connection.query("SELECT * FROM bookings ORDER BY id DESC", (err, rows) => {
+    if (err) return res.status(500).json(err);
     res.json(rows);
   });
 });
