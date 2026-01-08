@@ -1,3 +1,7 @@
+import dotenv from "dotenv";
+dotenv.config(); // ✅ Must be before anything else
+console.log("DB_USER:", process.env.DB_USER);
+console.log("DB_PASSWORD:", process.env.DB_PASSWORD ? "LOADED" : "NOT LOADED");
 import express from "express";
 import cors from "cors";
 import connection from "./db/connection.js";
@@ -9,14 +13,31 @@ const app = express();
 // ===============================
 app.use(
   cors({
-    origin: "*",
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type"],
+    origin: [
+      "http://localhost:3000", // local dev
+      "https://kashmir-tour-frontend.vercel.app" // your deployed frontend
+    ],
+    methods: ["GET", "POST", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "x-admin-token"],
   })
 );
 
 app.options("*", cors());
 app.use(express.json());
+// ===============================
+// ADMIN: GET ALL BOOKINGS (SECURE)
+// ===============================
+app.get("/admin/bookings", (req, res) => {
+  const token = req.headers["x-admin-token"];
+  if (token !== process.env.ADMIN_TOKEN) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  connection.query("SELECT * FROM bookings ORDER BY id DESC", (err, rows) => {
+    if (err) return res.status(500).json(err);
+    res.json(rows);
+  });
+});
 
 // ===============================
 // TEST ROUTE
